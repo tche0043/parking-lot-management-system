@@ -41,6 +41,13 @@
 - **管理後台**: 響應式管理介面，支援桌面和行動裝置
 - **繳費機**: 觸控螢幕最佳化介面，無滾動設計
 
+## 🖥️ 產品演示
+### kiosk(繳費機台)
+<img width="900" height="637" alt="截圖 2025-09-04 上午10 58 49" src="https://github.com/user-attachments/assets/173edd9e-f8f8-46a7-b136-4e07593ceba4" />
+
+### admin(管理員平台)
+<img width="1489" height="845" alt="截圖 2025-09-04 上午10 59 13" src="https://github.com/user-attachments/assets/9187a8ee-605e-40b9-93b2-e1b368862d4f" />
+
 ## 🛠️ 技術架構
 
 ### 後端技術
