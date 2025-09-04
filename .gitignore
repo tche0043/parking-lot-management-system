@@ -71,6 +71,6 @@ cookies.txt
 
 #development documents
 /context
-/.claude/
+.claude/
 /.playwright-mcp/
 
