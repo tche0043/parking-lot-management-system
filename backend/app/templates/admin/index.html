@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>停車場管理系統 - 管理後台</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='admin/css/style.css') }}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">
+          <i class="bi bi-car-front-fill me-2"></i>
+          停車場管理系統
+        </a>
+        <div class="navbar-nav ms-auto">
+          <div class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle text-white"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              <i class="bi bi-person-circle me-1"></i>
+              <span id="current-admin-username">管理員</span>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" href="#" id="logout-btn">
+                  <i class="bi bi-box-arrow-right me-2"></i>登出
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div
+      class="modal fade"
+      id="loginModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">管理員登入</h5>
+          </div>
+          <div class="modal-body">
+            <form id="login-form">
+              <div class="mb-3">
+                <label for="username" class="form-label">使用者名稱</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="username"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">密碼</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password"
+                  required
+                />
+              </div>
+              <div id="login-error" class="alert alert-danger d-none"></div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-box-arrow-in-right me-2"></i>登入
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+          <div class="position-sticky pt-3">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="#" data-page="dashboard">
+                  <i class="bi bi-speedometer2 me-2"></i>儀表板
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-page="lots">
+                  <i class="bi bi-geo-alt me-2"></i>停車場管理
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-page="vehicles">
+                  <i class="bi bi-car-front me-2"></i>車輛管理
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-page="reports">
+                  <i class="bi bi-graph-up me-2"></i>營收報表
+                </a>
+              </li>
+              <li class="nav-item" id="super-admin-menu" style="display: none">
+                <a class="nav-link" href="#" data-page="admins">
+                  <i class="bi bi-people me-2"></i>管理員設定
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+          <!-- Dashboard Page -->
+          <div id="dashboard-page" class="page-content">
+            <div
+              class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+            >
+              <h1 class="h2">儀表板</h1>
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  onclick="refreshDashboard()"
+                >
+                  <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+              <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                  <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                      <div class="col mr-2">
+                        <div
+                          class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+                        >
+                          管理停車場數
+                        </div>
+                        <div
+                          class="h5 mb-0 font-weight-bold text-gray-800"
+                          id="total-lots"
+                        >
+                          -
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                        <i class="bi bi-geo-alt text-primary fa-2x"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                  <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                      <div class="col mr-2">
+                        <div
+                          class="text-xs font-weight-bold text-success text-uppercase mb-1"
+                        >
+                          今日營收
+                        </div>
+                        <div
+                          class="h5 mb-0 font-weight-bold text-gray-800"
+                          id="today-revenue"
+                        >
+                          $0
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                        <i class="bi bi-currency-dollar text-success fa-2x"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                  <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                      <div class="col mr-2">
+                        <div
+                          class="text-xs font-weight-bold text-info text-uppercase mb-1"
+                        >
+                          目前在場車輛
+                        </div>
+                        <div
+                          class="h5 mb-0 font-weight-bold text-gray-800"
+                          id="current-occupancy"
+                        >
+                          0
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                        <i class="bi bi-car-front text-info fa-2x"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                  <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                      <div class="col mr-2">
+                        <div
+                          class="text-xs font-weight-bold text-warning text-uppercase mb-1"
+                        >
+                          今日進場數
+                        </div>
+                        <div
+                          class="h5 mb-0 font-weight-bold text-gray-800"
+                          id="today-entries"
+                        >
+                          0
+                        </div>
+                      </div>
+                      <div class="col-auto">
+                        <i class="bi bi-arrow-right text-warning fa-2x"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Parking Lots Overview -->
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">停車場狀態總覽</h5>
+              </div>
+              <div class="card-body">
+                <div id="lots-overview" class="row">
+                  <!-- Parking lot cards will be inserted here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parking Lots Page -->
+          <div id="lots-page" class="page-content" style="display: none">
+            <div
+              class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+            >
+              <h1 class="h2">停車場管理</h1>
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="add-lot-btn"
+                  style="display: none"
+                >
+                  <i class="bi bi-plus-circle me-1"></i>新增停車場
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>名稱</th>
+                        <th>地址</th>
+                        <th>總車位</th>
+                        <th>目前使用</th>
+                        <th>使用率</th>
+                        <th>時費率</th>
+                        <th>日最高</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="lots-table-body">
+                      <!-- Table rows will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vehicles Page -->
+          <div id="vehicles-page" class="page-content" style="display: none">
+            <div
+              class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+            >
+              <h1 class="h2">車輛管理</h1>
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <select
+                  class="form-select me-2"
+                  id="lot-selector"
+                  style="width: auto"
+                >
+                  <option value="">選擇停車場</option>
+                </select>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  onclick="loadVehicles()"
+                >
+                  <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+                </button>
+              </div>
+            </div>
+
+            <!-- Vehicle Status Tabs -->
+            <ul class="nav nav-tabs" id="vehicle-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link active"
+                  id="current-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#current-vehicles"
+                  type="button"
+                  role="tab"
+                >
+                  目前在場車輛
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="history-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#vehicle-history"
+                  type="button"
+                  role="tab"
+                >
+                  歷史記錄
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content mt-3" id="vehicle-tab-content">
+              <div
+                class="tab-pane fade show active"
+                id="current-vehicles"
+                role="tabpanel"
+              >
+                <div class="card">
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>車牌號碼</th>
+                            <th>進場時間</th>
+                            <th>繳費狀態</th>
+                            <th>繳費截止</th>
+                            <th>應收費用</th>
+                            <th>操作</th>
+                          </tr>
+                        </thead>
+                        <tbody id="current-vehicles-body">
+                          <!-- Table rows will be inserted here -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-pane fade" id="vehicle-history" role="tabpanel">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>車牌號碼</th>
+                            <th>進場時間</th>
+                            <th>離場時間</th>
+                            <th>停車時長</th>
+                            <th>總費用</th>
+                          </tr>
+                        </thead>
+                        <tbody id="history-vehicles-body">
+                          <!-- Table rows will be inserted here -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admins Page -->
+          <div id="admins-page" class="page-content" style="display: none">
+            <div
+              class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+            >
+              <h1 class="h2">管理員設定</h1>
+              <div class="btn-toolbar mb-2 mb-md-0">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="add-admin-btn"
+                  data-bs-toggle="modal"
+                  data-bs-target="#adminModal"
+                  onclick="openAdminModal()"
+                >
+                  <i class="bi bi-plus-circle me-1"></i>新增管理員
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>使用者名稱</th>
+                        <th>角色等級</th>
+                        <th>管理停車場</th>
+                        <th>最後登入</th>
+                        <th>建立時間</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admins-table-body">
+                      <!-- Table rows will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reports Page -->
+          <div id="reports-page" class="page-content" style="display: none">
+            <div
+              class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+            >
+              <h1 class="h2">營收報表</h1>
+            </div>
+
+            <!-- Report Filters -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label for="report-lot" class="form-label">停車場</label>
+                    <select class="form-select" id="report-lot">
+                      <option value="">所有停車場</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="report-start-date" class="form-label"
+                      >開始日期</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="report-start-date"
+                    />
+                  </div>
+                  <div class="col-md-3">
+                    <label for="report-end-date" class="form-label"
+                      >結束日期</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="report-end-date"
+                    />
+                  </div>
+                  <div class="col-md-3 d-flex align-items-end">
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      onclick="generateReport()"
+                    >
+                      <i class="bi bi-search me-1"></i>產生報表
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Report Results -->
+            <div id="report-results" class="card" style="display: none">
+              <div class="card-header">
+                <h5 class="mb-0">營收報表結果</h5>
+              </div>
+              <div class="card-body">
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <h6>總營收: $<span id="total-revenue-amount">0</span></h6>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>停車場</th>
+                        <th>總交易數</th>
+                        <th>完成停車數</th>
+                        <th>總營收</th>
+                        <th>平均營收</th>
+                      </tr>
+                    </thead>
+                    <tbody id="report-table-body">
+                      <!-- Report rows will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Manual Action Modal -->
+    <div class="modal fade" id="manualActionModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">手動操作</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="manual-action-form">
+              <input type="hidden" id="manual-record-id" />
+              <div class="mb-3">
+                <label class="form-label">車牌號碼</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="manual-license-plate"
+                  readonly
+                />
+              </div>
+              <div class="mb-3">
+                <label for="manual-action" class="form-label">操作類型</label>
+                <select class="form-select" id="manual-action" required>
+                  <option value="">選擇操作</option>
+                  <option value="mark_paid">標記已繳費</option>
+                  <option value="force_exit">強制離場</option>
+                </select>
+              </div>
+              <div class="mb-3" id="amount-group" style="display: none">
+                <label for="manual-amount" class="form-label">繳費金額</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="manual-amount"
+                  min="0"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="executeManualAction()"
+            >
+              確認執行
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div class="modal fade" id="adminModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="adminModalTitle">新增管理員</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="admin-form">
+              <input type="hidden" id="admin-id" />
+              <div class="mb-3">
+                <label for="admin-username" class="form-label">使用者名稱</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="admin-username"
+                  required
+                />
+              </div>
+              <div class="mb-3" id="password-group">
+                <label for="admin-password" class="form-label">密碼</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="admin-password"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="admin-role-level" class="form-label">角色等級</label>
+                <select class="form-select" id="admin-role-level" required>
+                  <option value="">選擇角色等級</option>
+                  <option value="1">一般管理員 (LotManager)</option>
+                  <option value="99">超級管理員 (SuperAdmin)</option>
+                </select>
+              </div>
+              <div class="mb-3" id="lot-assignments-group">
+                <label class="form-label">管理停車場</label>
+                <div id="lot-checkboxes">
+                  <!-- Parking lot checkboxes will be inserted here -->
+                </div>
+                <small class="form-text text-muted">
+                  超級管理員可管理所有停車場，一般管理員僅能管理指定停車場
+                </small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="saveAdmin()"
+            >
+              <span id="save-admin-text">儲存</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='admin/js/app.js') }}"></script>
+  </body>
+</html>

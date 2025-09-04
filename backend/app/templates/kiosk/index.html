@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>停車繳費機</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="{{ url_for('static', filename='kiosk/css/style.css') }}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <i class="bi bi-car-front-fill header-icon"></i>
+          </div>
+          <div class="col">
+            <h1 class="header-title">停車繳費機</h1>
+            <p class="header-subtitle">Parking Payment Kiosk</p>
+          </div>
+          <div class="col-auto">
+            <div class="time-display" id="current-time"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container main-container">
+      <!-- Welcome Screen -->
+      <div id="welcome-screen" class="screen active">
+        <div class="welcome-card">
+          <div class="icon-large">
+            <i class="bi bi-car-front-fill"></i>
+          </div>
+          <h2 class="screen-title">歡迎使用停車繳費機</h2>
+          <p class="screen-subtitle">請輸入您的車牌號碼查詢停車費用</p>
+
+          <div class="input-group">
+            <div
+              class="form-control license-input"
+              id="license-plate-display"
+              style="background: #f8f9fa"
+            >
+              請點擊下方按鍵輸入車牌號碼
+            </div>
+          </div>
+
+          <!-- 虛擬鍵盤 -->
+          <div class="virtual-keyboard">
+            <!-- 數字列 -->
+            <div class="keyboard-row number-row">
+              <div class="keyboard-key" onclick="inputChar('1')">1</div>
+              <div class="keyboard-key" onclick="inputChar('2')">2</div>
+              <div class="keyboard-key" onclick="inputChar('3')">3</div>
+              <div class="keyboard-key" onclick="inputChar('4')">4</div>
+              <div class="keyboard-key" onclick="inputChar('5')">5</div>
+              <div class="keyboard-key" onclick="inputChar('6')">6</div>
+              <div class="keyboard-key" onclick="inputChar('7')">7</div>
+              <div class="keyboard-key" onclick="inputChar('8')">8</div>
+              <div class="keyboard-key" onclick="inputChar('9')">9</div>
+              <div class="keyboard-key" onclick="inputChar('0')">0</div>
+              <div class="keyboard-key" onclick="inputChar('-')">-</div>
+            </div>
+            
+            <!-- 第一字母列 QWERTY -->
+            <div class="keyboard-row">
+              <div class="keyboard-key" onclick="inputChar('Q')">Q</div>
+              <div class="keyboard-key" onclick="inputChar('W')">W</div>
+              <div class="keyboard-key" onclick="inputChar('E')">E</div>
+              <div class="keyboard-key" onclick="inputChar('R')">R</div>
+              <div class="keyboard-key" onclick="inputChar('T')">T</div>
+              <div class="keyboard-key" onclick="inputChar('Y')">Y</div>
+              <div class="keyboard-key" onclick="inputChar('U')">U</div>
+              <div class="keyboard-key" onclick="inputChar('I')">I</div>
+              <div class="keyboard-key" onclick="inputChar('O')">O</div>
+              <div class="keyboard-key" onclick="inputChar('P')">P</div>
+            </div>
+            
+            <!-- 第二字母列 ASDF -->
+            <div class="keyboard-row">
+              <div class="keyboard-key" onclick="inputChar('A')">A</div>
+              <div class="keyboard-key" onclick="inputChar('S')">S</div>
+              <div class="keyboard-key" onclick="inputChar('D')">D</div>
+              <div class="keyboard-key" onclick="inputChar('F')">F</div>
+              <div class="keyboard-key" onclick="inputChar('G')">G</div>
+              <div class="keyboard-key" onclick="inputChar('H')">H</div>
+              <div class="keyboard-key" onclick="inputChar('J')">J</div>
+              <div class="keyboard-key" onclick="inputChar('K')">K</div>
+              <div class="keyboard-key" onclick="inputChar('L')">L</div>
+            </div>
+            
+            <!-- 第三字母列 ZXCV + 退格 -->
+            <div class="keyboard-row">
+              <div class="keyboard-key" onclick="inputChar('Z')">Z</div>
+              <div class="keyboard-key" onclick="inputChar('X')">X</div>
+              <div class="keyboard-key" onclick="inputChar('C')">C</div>
+              <div class="keyboard-key" onclick="inputChar('V')">V</div>
+              <div class="keyboard-key" onclick="inputChar('B')">B</div>
+              <div class="keyboard-key" onclick="inputChar('N')">N</div>
+              <div class="keyboard-key" onclick="inputChar('M')">M</div>
+              <div class="keyboard-key wide" onclick="backspace()">
+                <i class="bi bi-backspace"></i>
+              </div>
+            </div>
+            
+            <!-- 功能列 -->
+            <div class="keyboard-row action-row">
+              <div class="keyboard-key wide" onclick="clearInput()">清除</div>
+              <div class="keyboard-key wide primary" onclick="queryFee()">查詢</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fee Display Screen -->
+      <div id="fee-screen" class="screen">
+        <div class="fee-card">
+          <div class="fee-header">
+            <h3>停車費用查詢結果</h3>
+            <div class="vehicle-info">
+              <i class="bi bi-car-front me-2"></i>
+              <span id="display-license-plate">ABC-1234</span>
+            </div>
+          </div>
+
+          <div class="parking-details">
+            <div class="detail-row">
+              <span class="label">停車場：</span>
+              <span class="value" id="lot-name">台中市政府停車場</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">進場時間：</span>
+              <span class="value" id="entry-time">2025-08-22 10:30:00</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">停車時長：</span>
+              <span class="value" id="parking-duration">2 小時 30 分鐘</span>
+            </div>
+          </div>
+
+          <div class="fee-amount">
+            <div class="amount-label">應繳費用</div>
+            <div class="amount-value" id="parking-fee">$90</div>
+          </div>
+
+          <div class="coupon-section">
+            <button class="coupon-btn" onclick="openQRModal()">
+              <i class="bi bi-qr-code-scan"></i>
+              掃描優惠券
+            </button>
+
+            <div id="applied-coupons" class="applied-coupons">
+              <!-- Applied coupons will appear here -->
+            </div>
+          </div>
+
+          <div class="final-amount">
+            <div class="row">
+              <div class="col">
+                <span class="amount-breakdown-label">原價：</span>
+                <span class="amount-breakdown-value" id="original-amount"
+                  >$90</span
+                >
+              </div>
+              <div class="col">
+                <span class="amount-breakdown-label">折扣：</span>
+                <span class="amount-breakdown-value" id="discount-amount"
+                  >-$0</span
+                >
+              </div>
+            </div>
+            <div class="final-total">
+              <span class="final-label">實付金額：</span>
+              <span class="final-value" id="final-fee">$90</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button
+              class="btn btn-success btn-large"
+              onclick="showPaymentScreen()"
+            >
+              <i class="bi bi-credit-card me-2"></i>前往繳費
+            </button>
+            <button class="btn btn-outline-secondary" onclick="goBack()">
+              <i class="bi bi-arrow-left me-2"></i>重新查詢
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Screen -->
+      <div id="payment-screen" class="screen">
+        <div class="payment-card">
+          <div class="payment-header">
+            <h3>選擇付款方式</h3>
+            <div class="payment-summary">
+              <span
+                >車牌：<strong id="payment-license-plate"
+                  >ABC-1234</strong
+                ></span
+              >
+              <span>金額：<strong id="payment-amount">$60</strong></span>
+            </div>
+          </div>
+
+          <div class="payment-methods">
+            <div
+              class="payment-method"
+              onclick="selectPaymentMethod('Cash', this)"
+            >
+              <div class="method-icon">
+                <i class="bi bi-cash-stack"></i>
+              </div>
+              <div class="method-title">現金付款</div>
+              <div class="method-subtitle">請將現金投入投幣口</div>
+            </div>
+
+            <div
+              class="payment-method"
+              onclick="selectPaymentMethod('CreditCard', this)"
+            >
+              <div class="method-icon">
+                <i class="bi bi-credit-card"></i>
+              </div>
+              <div class="method-title">信用卡付款</div>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-outline-secondary" onclick="goBackToFee()">
+              <i class="bi bi-arrow-left me-2"></i>返回
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Screen -->
+      <div id="processing-screen" class="screen">
+        <div class="processing-card">
+          <div class="spinner-border text-primary spinner-large" role="status">
+            <span class="visually-hidden">處理中...</span>
+          </div>
+          <h3 class="processing-title">正在處理付款</h3>
+          <p class="processing-subtitle">請稍候，請勿離開...</p>
+          <div class="processing-details">
+            <div>付款方式：<span id="processing-method">信用卡</span></div>
+            <div>付款金額：<span id="processing-amount">$60</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="success-screen" class="screen">
+        <div class="success-card">
+          <div class="icon-large success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <h2 class="screen-title">繳費成功！</h2>
+          <p class="screen-subtitle">感謝您的使用</p>
+
+          <div class="receipt-details">
+            <div class="receipt-row">
+              <span>車牌號碼：</span>
+              <span id="receipt-license-plate">ABC-1234</span>
+            </div>
+            <div class="receipt-row">
+              <span>付款金額：</span>
+              <span id="receipt-amount">$60</span>
+            </div>
+            <div class="receipt-row">
+              <span>付款方式：</span>
+              <span id="receipt-method">信用卡</span>
+            </div>
+            <div class="receipt-row">
+              <span>交易編號：</span>
+              <span id="receipt-transaction-id">TXN20250822...</span>
+            </div>
+            <div class="receipt-row highlight">
+              <span>離場期限：</span>
+              <span id="receipt-exit-deadline">2025-08-22 14:45:00</span>
+            </div>
+          </div>
+
+          <div class="important-notice">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            請於 15 分鐘內離場，逾時需重新繳費
+          </div>
+
+          <button class="btn btn-primary btn-large" onclick="startOver()">
+            <i class="bi bi-arrow-clockwise me-2"></i>完成 (5秒後自動返回)
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Screen -->
+      <div id="error-screen" class="screen">
+        <div class="error-card">
+          <div class="icon-large error-icon">
+            <i class="bi bi-exclamation-circle-fill"></i>
+          </div>
+          <h2 class="screen-title">系統提示</h2>
+          <p class="error-message" id="error-message">找不到此車輛的在場紀錄</p>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary btn-large" onclick="goBack()">
+              <i class="bi bi-arrow-left me-2"></i>重新輸入
+            </button>
+            <button class="btn btn-outline-secondary" onclick="contactHelp()">
+              <i class="bi bi-telephone me-2"></i>聯絡服務台
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qr-modal" class="qr-modal">
+      <div class="qr-modal-content" style="position: relative">
+        <button class="qr-close-btn" onclick="closeQRModal()">
+          <i class="bi bi-x"></i>
+        </button>
+        <h4><i class="bi bi-qr-code-scan me-2"></i>掃描優惠券</h4>
+
+        <div class="qr-scanner" id="qr-scanner" onclick="startQRScan()">
+          <div class="qr-scanner-icon">
+            <i class="bi bi-qr-code-scan"></i>
+          </div>
+          <div class="qr-scanner-text" id="qr-scanner-text">
+            點擊此處掃描優惠券QR Code
+          </div>
+        </div>
+
+        <div class="action-buttons" style="margin-top: var(--spacing-lg)">
+          <button class="btn btn-outline-secondary" onclick="closeQRModal()">
+            <i class="bi bi-x me-2"></i>關閉
+          </button>
+          <button
+            class="btn btn-success"
+            onclick="testCoupon()"
+            style="display: none"
+            id="test-coupon-btn"
+          >
+            <i class="bi bi-check me-2"></i>使用測試券
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6">
+            <small>停車場管理系統 v1.0</small>
+          </div>
+          <div class="col-md-6 text-end">
+            <small>如需協助請洽服務台</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='kiosk/js/app.js') }}"></script>
+  </body>
+</html>
